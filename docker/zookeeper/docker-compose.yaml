@@ -1,0 +1,155 @@
+networks:
+  kafka-net:
+
+
+services:
+  # =======================
+  # ZooKeeper ensemble (3)
+  # =======================
+  zk1:
+    image: ${ZK_IMAGE}
+    container_name: zk1
+    hostname: zk1
+    env_file:
+      - .env.zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+    volumes:
+      - ./jaas/zookeeper-jaas.conf:/opt/kafka/config/zookeeper-jaas.conf:ro
+    networks: [ kafka-net ]
+
+  zk2:
+    image: ${ZK_IMAGE}
+    container_name: zk2
+    hostname: zk2
+    env_file:
+      - .env.zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 2
+    volumes:
+      - ./jaas/zookeeper-jaas.conf:/opt/kafka/config/zookeeper-jaas.conf:ro
+    networks: [ kafka-net ]
+
+  zk3:
+    image: ${ZK_IMAGE}
+    container_name: zk3
+    hostname: zk3
+    env_file:
+      - .env.zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 3
+    volumes:
+      - ./jaas/zookeeper-jaas.conf:/opt/kafka/config/zookeeper-jaas.conf:ro
+    networks: [ kafka-net ]
+
+  # =======================
+  # Kafka brokers (3)
+  # =======================
+  kafka1:
+    image: ${KAFKA_IMAGE}
+    container_name: kafka1
+    hostname: kafka1
+    depends_on: [ zk1, zk2, zk3 ]
+    ports:
+      - "9092:9092" # EXTERNAL
+    env_file:
+      - .env
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zk1:2181,zk2:2181,zk3:2181"
+      # Listeners: INTERNAL cho inter-broker; EXTERNAL cho client
+      KAFKA_LISTENERS: "INTERNAL://kafka1:19092,EXTERNAL://0.0.0.0:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka1:19092,EXTERNAL://${KAFKA_DOMAIN}:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+      # SASL/PLAIN
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+
+      # Topic defaults
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+
+      # Authorizer (tùy chọn nếu bạn muốn ACL)
+      # KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      # KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+
+      # Log/others
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+
+      # Trỏ JAAS cho broker
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/kafka/config/broker-jaas.conf -DKAFKA_INTER_PASSWORD=$KAFKA_INTER_PASSWORD -DKAFKA_SASL_PASSWORD=$KAFKA_SASL_PASSWORD -DKAFKA_SASL_USER=$KAFKA_SASL_USER"
+
+    volumes:
+      - ./jaas/broker-jaas.conf:/opt/kafka/config/broker-jaas.conf:ro
+    networks: [ kafka-net ]
+
+  kafka2:
+    image: ${KAFKA_IMAGE}
+    container_name: kafka2
+    hostname: kafka2
+    depends_on: [ zk1, zk2, zk3 ]
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: "zk1:2181,zk2:2181,zk3:2181"
+      KAFKA_LISTENERS: "INTERNAL://kafka2:19092,EXTERNAL://0.0.0.0:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka2:19092,EXTERNAL://${KAFKA_DOMAIN}:9093"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/kafka/config/broker-jaas.conf -DKAFKA_INTER_PASSWORD=$KAFKA_INTER_PASSWORD -DKAFKA_SASL_PASSWORD=$KAFKA_SASL_PASSWORD -DKAFKA_SASL_USER=$KAFKA_SASL_USER"
+    volumes:
+      - ./jaas/broker-jaas.conf:/opt/kafka/config/broker-jaas.conf:ro
+    networks: [ kafka-net ]
+
+  kafka3:
+    image: ${KAFKA_IMAGE}
+    container_name: kafka3
+    hostname: kafka3
+    depends_on: [ zk1, zk2, zk3 ]
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: "zk1:2181,zk2:2181,zk3:2181"
+      KAFKA_LISTENERS: "INTERNAL://kafka3:19092,EXTERNAL://0.0.0.0:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka3:19092,EXTERNAL://${KAFKA_DOMAIN}:9094"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/kafka/config/broker-jaas.conf -DKAFKA_INTER_PASSWORD=$KAFKA_INTER_PASSWORD -DKAFKA_SASL_PASSWORD=$KAFKA_SASL_PASSWORD -DKAFKA_SASL_USER=$KAFKA_SASL_USER"
+    volumes:
+      - ./jaas/broker-jaas.conf:/opt/kafka/config/broker-jaas.conf:ro
+    networks: [ kafka-net ]
+
+  kafbat:
+    image: ghcr.io/kafbat/kafka-ui
+    ports:
+      - "8081:8080"
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+      - zk1
+      - zk2
+      - zk3
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
+    networks: [ kafka-net ]
+
