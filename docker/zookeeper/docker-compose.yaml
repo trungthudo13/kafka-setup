@@ -98,7 +98,7 @@ services:
     hostname: kafka2
     depends_on: [ zk1, zk2, zk3 ]
     ports:
-      - "39092:39092"
+      - "39093:39093"
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: "zk1:2181,zk2:2181,zk3:2181"
@@ -124,7 +124,7 @@ services:
     hostname: kafka3
     depends_on: [ zk1, zk2, zk3 ]
     ports:
-      - "49092:49092"
+      - "49094:49094"
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ZOOKEEPER_CONNECT: "zk1:2181,zk2:2181,zk3:2181"
