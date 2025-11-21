@@ -1,0 +1,136 @@
+name: kafka-kraft
+
+networks:
+  kafka-net:
+
+
+services:
+  # =======================
+  # Kafka KRaft brokers (3)
+  # =======================
+  kafka-kraft1:
+    image: ${KAFKA_IMAGE}
+    container_name: kafka-kraft1
+    hostname: kafka-kraft1
+    ports:
+      - "29092:29092" # EXTERNAL
+    env_file:
+      - ../zookeeper/.env
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka-kraft1:29093,2@kafka-kraft2:29093,3@kafka-kraft3:29093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # Listeners: INTERNAL cho inter-broker; EXTERNAL cho client; CONTROLLER cho quorum
+      KAFKA_LISTENERS: "INTERNAL://kafka-kraft1:19092,EXTERNAL://0.0.0.0:29092,CONTROLLER://kafka-kraft1:29093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-kraft1:19092,EXTERNAL://${KAFKA_DOMAIN}:29092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+      # SASL/PLAIN
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+
+      # Topic defaults
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+
+      # Log/others
+      CLUSTER_ID: ${CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+
+      # Trỏ JAAS cho broker
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/kafka/config/broker-jaas.conf -DKAFKA_INTER_PASSWORD=$KAFKA_INTER_PASSWORD -DKAFKA_SASL_PASSWORD=$KAFKA_SASL_PASSWORD -DKAFKA_SASL_USER=$KAFKA_SASL_USER"
+
+    volumes:
+      - ../zookeeper/jaas/broker-jaas.conf:/opt/kafka/config/broker-jaas.conf:ro
+    networks: [ kafka-net ]
+
+  kafka-kraft2:
+    image: ${KAFKA_IMAGE}
+    container_name: kafka-kraft2
+    hostname: kafka-kraft2
+    ports:
+      - "39093:39093"
+    env_file:
+      - ../zookeeper/.env
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka-kraft1:29093,2@kafka-kraft2:29093,3@kafka-kraft3:29093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: "INTERNAL://kafka-kraft2:19092,EXTERNAL://0.0.0.0:39093,CONTROLLER://kafka-kraft2:29093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-kraft2:19092,EXTERNAL://${KAFKA_DOMAIN}:39093"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+
+      CLUSTER_ID: ${CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/kafka/config/broker-jaas.conf -DKAFKA_INTER_PASSWORD=$KAFKA_INTER_PASSWORD -DKAFKA_SASL_PASSWORD=$KAFKA_SASL_PASSWORD -DKAFKA_SASL_USER=$KAFKA_SASL_USER"
+    volumes:
+      - ../zookeeper/jaas/broker-jaas.conf:/opt/kafka/config/broker-jaas.conf:ro
+    networks: [ kafka-net ]
+
+  kafka-kraft3:
+    image: ${KAFKA_IMAGE}
+    container_name: kafka-kraft3
+    hostname: kafka-kraft3
+    ports:
+      - "49094:49094"
+    env_file:
+      - ../zookeeper/.env
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka-kraft1:29093,2@kafka-kraft2:29093,3@kafka-kraft3:29093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: "INTERNAL://kafka-kraft3:19092,EXTERNAL://0.0.0.0:49094,CONTROLLER://kafka-kraft3:29093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-kraft3:19092,EXTERNAL://${KAFKA_DOMAIN}:49094"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+
+      CLUSTER_ID: ${CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/kafka/config/broker-jaas.conf -DKAFKA_INTER_PASSWORD=$KAFKA_INTER_PASSWORD -DKAFKA_SASL_PASSWORD=$KAFKA_SASL_PASSWORD -DKAFKA_SASL_USER=$KAFKA_SASL_USER"
+    volumes:
+      - ../zookeeper/jaas/broker-jaas.conf:/opt/kafka/config/broker-jaas.conf:ro
+    networks: [ kafka-net ]
+
+  kafbat:
+    image: ghcr.io/kafbat/kafka-ui
+    ports:
+      - "8081:8080"
+    depends_on:
+      - kafka-kraft1
+      - kafka-kraft2
+      - kafka-kraft3
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
+    networks: [ kafka-net ]
